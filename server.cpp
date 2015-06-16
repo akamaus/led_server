@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -5,23 +7,35 @@
 #include <errno.h>
 #include <string.h>
 
-#include <stdexcept>
+#include <stdio.h>
 
-typedef int FIFO;
+typedef FILE* FIFO;
+enum class FIFO_ROLE { Reader, Writer};
 
-FIFO open_fifo(const char *path, int flags) {
+FIFO open_fifo(const char *path, FIFO_ROLE role) {
     if (access(path, F_OK ) != -1 ) {
     } else {
         if (mkfifo(path, 0666) != 0) throw std::runtime_error(strerror(errno));
     }
-    int handle = open(path, flags);
-    if (handle == -1) throw std::runtime_error(strerror(errno));
+    FILE *handle = fopen(path, role == FIFO_ROLE::Reader? "r":"w");
+    if (handle == nullptr) throw std::runtime_error(strerror(errno));
     return handle;
 }
 
+constexpr int BUF_SIZE=1024;
+
 int main(int argc, char *argv[]) {
-    FIFO input = open_fifo("/tmp/led_input", O_RDONLY);
-    FIFO output = open_fifo("/tmp/led_output", O_WRONLY);
 
+//    FIFO output = open_fifo("/tmp/led_output", FIFO_ROLE::Writer);
 
+    char line_buffer[BUF_SIZE];
+
+    while(true) {
+        FIFO input = open_fifo("/tmp/led_input", FIFO_ROLE::Reader);
+        char *res = fgets(line_buffer, BUF_SIZE, input);
+        fclose(input);
+        if (res) {
+            fprintf(stderr, "got %s", line_buffer);
+        } else fprintf(stderr, "no line\n");
+    }
 }
