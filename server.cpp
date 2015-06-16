@@ -32,10 +32,10 @@ int main(int argc, char *argv[]) {
 
     while(true) {
         FIFO input = open_fifo("/tmp/led_input", FIFO_ROLE::Reader);
-        char *res = fgets(line_buffer, BUF_SIZE, input);
-        fclose(input);
-        if (res) {
+        while(fgets(line_buffer, BUF_SIZE, input)) {
             fprintf(stderr, "got %s", line_buffer);
-        } else fprintf(stderr, "no line\n");
+        }
+        fprintf(stderr, "closing\n");
+        fclose(input);
     }
 }
