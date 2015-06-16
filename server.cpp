@@ -9,6 +9,10 @@
 
 #include <stdio.h>
 
+#include "commands.hpp"
+
+constexpr int BUF_SIZE=1024;
+
 typedef FILE* FIFO;
 enum class FIFO_ROLE { Reader, Writer};
 
@@ -22,7 +26,27 @@ FIFO open_fifo(const char *path, FIFO_ROLE role) {
     return handle;
 }
 
-constexpr int BUF_SIZE=1024;
+Result interpret_line(char *line) {
+    string cmd(strtok(line, " \n"));
+    vector<string> args;
+    char *arg;
+    while(arg = strtok(nullptr, " \n")) {
+        args.push_back(arg);
+    }
+
+    for (int i=0; i<sizeof(g_commands) / sizeof(g_commands[0]); i++) {
+        if (cmd == g_commands[i].cmd_str) {
+            if (g_commands[i].num_args == args.size()) {
+                return g_commands[i].func(args);
+            } else {
+                fprintf(stderr, "wrong args number\n");
+                return Result(Res::FAILED);
+            }
+        }
+    }
+    fprintf(stderr, "unknown command '%s'\n", cmd.c_str());
+    return Result(Res::FAILED);
+}
 
 int main(int argc, char *argv[]) {
 
@@ -34,6 +58,7 @@ int main(int argc, char *argv[]) {
         FIFO input = open_fifo("/tmp/led_input", FIFO_ROLE::Reader);
         while(fgets(line_buffer, BUF_SIZE, input)) {
             fprintf(stderr, "got %s", line_buffer);
+            interpret_line(line_buffer);
         }
         fprintf(stderr, "closing\n");
         fclose(input);
