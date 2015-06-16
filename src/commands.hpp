@@ -6,11 +6,11 @@
 using std::vector;
 using std::string;
 
-enum Res { OK, FAILED };
+enum Status { OK, FAILED };
 class Result {
 public:
-    Result(Res _r, string _v=""):res(_r), value(_v){}
-    Res res;
+    Result(Status _s, string _v=""):status(_s), value(_v){}
+    Status status;
     string value;
 };
 

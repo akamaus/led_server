@@ -1,20 +1,23 @@
 #include "commands.hpp"
+#include "controller.hpp"
 
 Result set_led_state(vector<string> args) {
     if (args[0] == "on") {
         fprintf(stderr, "enabling led\n");
-        return Result(Res::OK);
+        g_led_enabled.store(true);
+        return Result(Status::OK);
     } else if (args[0] == "off") {
         fprintf(stderr, "disabling led\n");
-        return Result(Res::OK);
+        g_led_enabled.store(false);
+        return Result(Status::OK);
     } else {
         fprintf(stderr, "unknown arg %s\n", args[0].c_str());
-        return Result(Res::FAILED);
+        return Result(Status::FAILED);
     }
 }
 
 Result get_led_state(vector<string> args) {
-    return Result(Res::OK, "on");
+    return Result(Status::OK, g_led_enabled.load()?"on":"off");
 }
 
 command g_commands[CMD_NUM] = { {"set-led-state", 1, set_led_state},

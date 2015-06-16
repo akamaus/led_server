@@ -11,6 +11,9 @@
 
 #include "commands.hpp"
 
+#define INPUT_FIFO "/tmp/led_input"
+#define OUTPUT_FIFO "/tmp/led_output"
+
 constexpr int BUF_SIZE=1024;
 
 typedef FILE* FIFO;
@@ -40,27 +43,31 @@ Result interpret_line(char *line) {
                 return g_commands[i].func(args);
             } else {
                 fprintf(stderr, "wrong args number\n");
-                return Result(Res::FAILED);
+                return Result(Status::FAILED);
             }
         }
     }
     fprintf(stderr, "unknown command '%s'\n", cmd.c_str());
-    return Result(Res::FAILED);
+    return Result(Status::FAILED);
 }
 
 int main(int argc, char *argv[]) {
-
-//    FIFO output = open_fifo("/tmp/led_output", FIFO_ROLE::Writer);
-
     char line_buffer[BUF_SIZE];
 
     while(true) {
-        FIFO input = open_fifo("/tmp/led_input", FIFO_ROLE::Reader);
+        FIFO input = open_fifo(INPUT_FIFO, FIFO_ROLE::Reader);
+        FIFO output = nullptr;
         while(fgets(line_buffer, BUF_SIZE, input)) {
             fprintf(stderr, "got %s", line_buffer);
-            interpret_line(line_buffer);
+            Result res = interpret_line(line_buffer);
+            if (!output) {
+                output = open_fifo(OUTPUT_FIFO, FIFO_ROLE::Writer);
+            }
+            fprintf(output, "%s%s%s\n", (res.status == Status::OK) ? "OK":"FAILED", res.value.size()==0 ? "" :" ", res.value.c_str());
+
         }
         fprintf(stderr, "closing\n");
         fclose(input);
+        fclose(output);
     }
 }
