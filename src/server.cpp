@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "commands.hpp"
+#include "controller.hpp"
 
 #define INPUT_FIFO "/tmp/led_input"
 #define OUTPUT_FIFO "/tmp/led_output"
@@ -52,6 +53,13 @@ Result interpret_line(char *line) {
 }
 
 int main(int argc, char *argv[]) {
+    pthread_t thr;
+    int res;
+    res = pthread_create(&thr, nullptr, controller_loop, nullptr);
+    if (res != 0) {
+        throw std::runtime_error(strerror(res));
+    }
+
     char line_buffer[BUF_SIZE];
 
     while(true) {

@@ -1,4 +1,5 @@
-CXXFLAGS='--std=c++11'
+CXXFLAGS+='--std=c++11'
+LDFLAGS+='-pthread'
 # Add .d to Make's recognized suffixes.
 SUFFIXES += .d .hpp
 
@@ -20,7 +21,7 @@ endif
 clean:
 	rm -rf obj src/*.d
 server: $(OBJS) #obj/commands.o obj/server.o
-	gcc -o server $(OBJS) -lstdc++
+	gcc $(LDFLAGS) -o server $(OBJS) -lstdc++
 
 #This is the rule for creating the dependency files
 src/%.d: src/%.cpp
@@ -32,4 +33,3 @@ src/%.d: src/%.cpp
 obj/%.o: src/%.cpp src/%.d
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
