@@ -3,11 +3,14 @@
 
 template <typename T> struct str_assoc {
     T value;
-    const char *str;
+    const string str;
 };
 
 template <typename T>
-const char *lookup_string(str_assoc<T>table[], T v) {
+using lookup_table = const vector<str_assoc<T>>;
+
+template <typename T>
+const string &lookup_string(lookup_table<T> &table, T v) {
     for (int i=0; i<ARRAY_SIZE(table); i++) {
         if (table[i].value == v)
             return table[i].str;
@@ -24,7 +27,7 @@ const T *lookup_value(str_assoc<T>table[], const string &str) {
     return nullptr;
 }
 
-static str_assoc<bool> led_state_table[] = {
+static vector::str_assoc<bool> led_state_table = {
     { true, "on"},
     { false, "off"}
 };
@@ -43,7 +46,7 @@ Result get_led_state(vector<string> args) {
     return Result(Status::OK, g_led_enabled.load()?"on":"off");
 }
 
-static str_assoc<Color> led_colors_table[] = {
+static vector::str_assoc<Color> led_colors_table = {
     { Color::Red, "red" },
     { Color::Green, "green" },
     { Color::Blue, "blue"}
