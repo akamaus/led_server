@@ -6,6 +6,8 @@
 using std::vector;
 using std::string;
 
+#define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
+
 enum Status { OK, FAILED };
 class Result {
 public:
