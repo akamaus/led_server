@@ -38,10 +38,10 @@ Result interpret_line(char *line) {
         args.push_back(arg);
     }
 
-    for (int i=0; i<sizeof(g_commands) / sizeof(g_commands[0]); i++) {
-        if (cmd == g_commands[i].cmd_str) {
-            if (g_commands[i].num_args == args.size()) {
-                return g_commands[i].func(args);
+    for (command &entry : g_commands) {
+        if (cmd == entry.cmd_str) {
+            if (entry.num_args == args.size()) {
+                return entry.func(args);
             } else {
                 fprintf(stderr, "wrong args number\n");
                 return Result(Status::FAILED);

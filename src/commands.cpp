@@ -3,55 +3,57 @@
 
 template <typename T> struct str_assoc {
     T value;
-    const string str;
+    string str;
 };
 
 template <typename T>
-using lookup_table = const vector<str_assoc<T>>;
+using lookup_table = vector<str_assoc<T>>;
 
-template <typename T>
-const string &lookup_string(lookup_table<T> &table, T v) {
-    for (int i=0; i<ARRAY_SIZE(table); i++) {
-        if (table[i].value == v)
-            return table[i].str;
-    }
-    return nullptr;
-}
-
-template <typename T>
-const T *lookup_value(str_assoc<T>table[], const string &str) {
-    for (int i=0; i<ARRAY_SIZE(table); i++) {
-        if (str == table[i].str)
-            return &table[i].value;
-    }
-    return nullptr;
-}
-
-static vector::str_assoc<bool> led_state_table = {
+static const lookup_table<bool> led_state_table = {
     { true, "on"},
     { false, "off"}
 };
 
-Result set_led_state(vector<string> args) {
-    const bool *tgt = lookup_value(led_state_table, args[0]);
-    if (tgt) {
-        g_led_enabled.store(*tgt);
-        return Result(Status::OK);
-    } else {
-        return Result(Status::FAILED);
-    }
-}
-
-Result get_led_state(vector<string> args) {
-    return Result(Status::OK, g_led_enabled.load()?"on":"off");
-}
-
-static vector::str_assoc<Color> led_colors_table = {
+static lookup_table<Color> led_colors_table = {
     { Color::Red, "red" },
     { Color::Green, "green" },
     { Color::Blue, "blue"}
 };
 
-command g_commands[CMD_NUM] = { {"set-led-state", 1, set_led_state},
-                                {"get-led-state", 0, get_led_state}
-                              };
+static lookup_table<int> led_periods_table = {
+    { 100000,  "0"},
+    { 1000000, "1"},
+    { 2000000, "2"},
+    { 3000000, "3"},
+    { 4000000, "4"},
+    { 5000000, "5"}
+};
+
+template <typename T>
+Result table_getter(const lookup_table<T> &table, const std::atomic<T> &v) {
+    for (auto &a : table) {
+        if (a.value == v.load())
+            return Result(Status::OK, a.str);
+    }
+    return Result(Status::FAILED);
+}
+
+template <typename T>
+Result table_setter(const lookup_table<T> &table, std::atomic<T> &var, const string &new_val) {
+    for (auto &a : table) {
+        if (new_val == a.str) {
+            var.store(a.value);
+            return Result(Status::OK);
+        }
+    }
+    return Result(Status::FAILED);
+}
+
+vector<command> g_commands = {
+    {"set-led-state", 1, [](const vector<string> &args) -> Result { return table_setter(led_state_table, g_led_enabled, args[0]); } },
+    {"get-led-state", 0, [](const vector<string> &args) -> Result { return table_getter(led_state_table, g_led_enabled); } },
+    {"set-led-color", 1, [](const vector<string> &args) -> Result { return table_setter(led_colors_table, g_led_color, args[0]); } },
+    {"get-led-color", 0, [](const vector<string> &args) -> Result { return table_getter(led_colors_table, g_led_color); } },
+    {"set-led-rate", 1, [](const vector<string> &args) -> Result { return table_setter(led_periods_table, g_led_period, args[0]); } },
+    {"get-led-rate", 0, [](const vector<string> &args) -> Result { return table_getter(led_periods_table, g_led_period); } }
+};

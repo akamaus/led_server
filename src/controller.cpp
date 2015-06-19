@@ -11,7 +11,7 @@ void *controller_loop(void *unused) {
     while(1) {
         if (g_led_enabled.load()) {
             Color c = g_led_color.load();
-            fprintf(stdout, c==Color::Red ? "<R>\n" : (c==Color::Green ? "<G>" : "<B>"));
+            fprintf(stdout, c==Color::Red ? "<R>\n" : (c==Color::Green ? "<G>\n" : "<B>\n"));
         }
         usleep(g_led_period.load());
     }
